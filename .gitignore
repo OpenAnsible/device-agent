@@ -1,4 +1,7 @@
+
 # Compiled files
+*.pyc
+*.pyo
 *.o
 *.so
 *.rlib

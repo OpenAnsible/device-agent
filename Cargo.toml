@@ -1,0 +1,34 @@
+[package]
+
+name = "src"
+version = "0.0.1"
+authors = ["Luo <gnulinux@126.com>"]
+
+[dependencies]
+# screenshot = { path="../screenshot-rs" }
+image      = "*"
+bmp        = "*"
+libc       = "*"
+
+
+# https://github.com/tomaka/glutin/tree/master/src/api
+
+[target.'cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "openbsd"))'.dependencies]
+# https://github.com/Daggerbot/x11-rs/blob/master/examples/xrecord/main.rs
+xlib   = "*"
+x11cap = "*"
+# https://crates.io/search?q=Wayland
+
+
+[target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "*"
+# core-graphics   = "*"
+core-graphics   = { path="../core-graphics-rs" }
+cocoa           = "*"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# https://github.com/retep998/winapi-rs
+user32-sys = "*"
+gdi32-sys  = "*"
+
+
