@@ -17,7 +17,7 @@ fn main (){
     };
     println!("OS: {}", os );
     
-    let screens = devices::screen::display::list();
+    let screens = devices::screen::display_list();
     println!("{:?}", screens );
     // for screen in screens.iter() {
     //     println!("Screen ID: {}", screen.id);

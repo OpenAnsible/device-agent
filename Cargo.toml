@@ -21,10 +21,11 @@ x11cap = "*"
 
 
 [target.'cfg(target_os = "macos")'.dependencies]
-core-foundation = "*"
+core-foundation = {  path="../core-foundation-rs/core-foundation" }
+
 # core-graphics   = "*"
 core-graphics   = { path="../core-graphics-rs" }
-cocoa           = "*"
+# cocoa           = "*"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # https://github.com/retep998/winapi-rs
