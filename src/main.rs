@@ -18,7 +18,9 @@ fn main (){
     println!("OS: {}", os );
     
     let screens = devices::screen::display_list();
-    println!("{:?}", screens );
+    let windows = devices::screen::window_list();
+    println!("Screens: \n\t{:?}", screens );
+    println!("Windows: \n\t{:?}", windows );
     // for screen in screens.iter() {
     //     println!("Screen ID: {}", screen.id);
     //     println!("Screen Windows:");
