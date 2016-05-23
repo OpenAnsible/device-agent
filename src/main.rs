@@ -15,19 +15,20 @@ fn main (){
     } else {
         "unknow"
     };
-    println!("OS: {}", os );
     
+    println!("Operator System: {}", os );
+
+    // Displays
     let screens = devices::screen::display_list();
-    let windows = devices::screen::window_list();
-    println!("Screens: \n\t{:?}", screens );
-    println!("Windows: \n\t{:?}", windows );
-    // for screen in screens.iter() {
-    //     println!("Screen ID: {}", screen.id);
-    //     println!("Screen Windows:");
-    //     for window in screen.windows.iter() {
-    //         println!("\t{:?}", window);
-    //     }
-    // }
+    for display_id in screens.iter() {
+        println!("Screen ID: {}", display_id);
+        println!("Screen Windows:");
+        // Windows of Display
+        let windows = devices::screen::window_list(*display_id);
+        for window in windows.iter() {
+            println!("\t{:?}", window);
+        }
+    }
 }
 
 

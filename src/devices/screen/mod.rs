@@ -94,8 +94,8 @@ pub mod ffi {
         unsafe{
             let windowList: CFArrayRef = CGWindowListCopyWindowInfo(
                 kCGWindowListExcludeDesktopElements, 
-                // window_id as CGWindowID
-                kCGNullWindowID
+                window_id as CGWindowID
+                // kCGNullWindowID
             );
             let length = CFArrayGetCount(windowList) as usize;
 
@@ -355,8 +355,6 @@ pub mod ffi {
             }
             let mut disps: Vec<CGDisplayCount> = Vec::with_capacity(count as usize);
             disps.set_len(count as usize);
-            
-            println!("Disps: {:?}", disps );
 
             err = CGGetActiveDisplayList(disps.len() as CGDisplayCount, &mut disps[0] as *mut CGDirectDisplayID, &mut count);
             if err != CGErrorSuccess {
@@ -404,6 +402,6 @@ pub fn display_list() -> Vec<usize> {
 }
 
 
-pub fn window_list() -> Vec<ffi::Window> {
-    ffi::GetWindowList(0usize)
+pub fn window_list(display_id: usize) -> Vec<ffi::Window> {
+    ffi::GetWindowList(display_id)
 }
