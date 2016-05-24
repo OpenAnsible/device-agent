@@ -29,6 +29,18 @@ fn main (){
             println!("\t{:?} {}\t{}", window.owner_pid, window.name, window.owner_name);
         }
     }
+
+    // Capture
+    let image = devices::screen::display_capture(screens[0]);
+    match image {
+        Ok(image) => {
+            unsafe { image.to_bmp("test.bmp"); }
+            unsafe { image.to_png("/Users/luozijun/Project/OpenAnsible/device-agent/test.png"); }
+        },
+        Err(_) => {
+            println!("Display Capture Fail.");
+        }
+    }
 }
 
 

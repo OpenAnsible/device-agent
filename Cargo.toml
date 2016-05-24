@@ -1,15 +1,15 @@
 [package]
 
-name = "src"
+name = "device-agent"
 version = "0.0.1"
 authors = ["Luo <gnulinux@126.com>"]
 
 [dependencies]
 # screenshot = { path="../screenshot-rs" }
-image      = "*"
+# image      = "*"
 bmp        = "*"
 libc       = "*"
-
+lodepng    = "*"
 
 # https://github.com/tomaka/glutin/tree/master/src/api
 
