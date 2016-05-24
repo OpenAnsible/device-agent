@@ -26,7 +26,7 @@ fn main (){
         // Windows of Display
         let windows = devices::screen::window_list(*display_id);
         for window in windows.iter() {
-            println!("\t{:?}", window);
+            println!("\t{:?} {}\t{}", window.owner_pid, window.name, window.owner_name);
         }
     }
 }

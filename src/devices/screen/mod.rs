@@ -17,23 +17,23 @@ pub mod ffi {
 
     #[derive(Debug)]
     pub struct Window {
-        number: isize,
-        store_type: isize,
-        layer: isize,
-        sharing_state: isize,
-        alpha: f32,
-        owner_pid: isize,
-        memory_usage: isize,  // i64
-        workspace: isize,
-        owner_name: String, // &'static str
-        name: String,
-        is_on_screen: bool,
-        backing_location_video_memory: bool,
+        pub number: isize,
+        pub store_type: isize,
+        pub layer: isize,
+        pub sharing_state: isize,
+        pub alpha: f32,
+        pub owner_pid: isize,
+        pub memory_usage: isize,  // i64
+        pub workspace: isize,
+        pub owner_name: String, // &'static str
+        pub name: String,
+        pub is_on_screen: bool,
+        pub backing_location_video_memory: bool,
         // kCGWindowBounds
-        height: f64,
-        width: f64,
-        x: f64,
-        y: f64,
+        pub height: f64,
+        pub width: f64,
+        pub x: f64,
+        pub y: f64,
     }
     pub type Windows = Vec<Window>;
 
@@ -54,16 +54,22 @@ pub mod ffi {
         CFArrayGetCount, // CFArrayGetValueAtIndex,
     };
     use self::core_graphics::geometry::{ CGSize, CGPoint, CGRect, CGFloat };
+    use self::core_foundation::base:: { CFRange, Boolean };
+
     use self::core_foundation::dictionary::{ 
         CFDictionaryContainsKey, CFDictionaryGetCount, CFDictionaryGetValueIfPresent, 
         CFDictionaryGetKeysAndValues
     };
-    use self::core_foundation::string::{ CFString, CFStringRef, __CFString, CFStringGetCStringPtr, kCFStringEncodingUTF8 };
+    use self::core_foundation::string::{ 
+        CFString, CFStringRef, __CFString, 
+        CFStringGetCStringPtr, CFStringGetLength, CFStringGetCString, CFStringGetBytes, 
+        kCFStringEncodingUTF8 
+    };
     use self::core_foundation::number::{ 
         CFNumber, CFNumberRef, __CFNumber, CFNumberType, CFNumberGetValue,
         kCFNumberSInt32Type, kCGWindowIDCFNumberType, kCFNumberSInt64Type, kCFNumberFloat32Type, 
-        kCFNumberFloat64Type, kCFNumberIntType, kCFNumberLongType, kCFNumberLongLongType, kCFNumberFloatType,
-        CFBooleanGetValue
+        kCFNumberFloat64Type, kCFNumberIntType, kCFNumberLongType, kCFNumberLongLongType, 
+        kCFNumberFloatType, CFBooleanGetValue
     };
     use self::core_foundation::boolean:: {
         CFBoolean, CFBooleanRef, kCFBooleanTrue, kCFBooleanFalse
@@ -86,6 +92,44 @@ pub mod ffi {
         let k = CFString::new(s).0;
         let __CFString(ref key) = *k;
         key
+    }
+    unsafe fn cf_string_ref_to_string (theString: CFStringRef) -> String {
+        let c_string = CFStringGetCStringPtr(theString, kCFStringEncodingUTF8);
+        if c_string != ptr::null() {
+            str::from_utf8_unchecked(CStr::from_ptr(c_string).to_bytes()).to_string()
+        } else {
+            let char_len: CFIndex = CFStringGetLength(theString);
+
+            // First, ask how big the buffer ought to be.
+            let mut bytes_required: CFIndex = 0;
+            CFStringGetBytes(theString,
+                             CFRange { location: 0, length: char_len },
+                             kCFStringEncodingUTF8,
+                             0,
+                             false as Boolean,
+                             ptr::null_mut(),
+                             0,
+                             &mut bytes_required);
+
+            // Then, allocate the buffer and actually copy.
+            let mut buffer = vec![b'\x00'; bytes_required as usize];
+
+            let mut bytes_used: CFIndex = 0;
+            let chars_written = CFStringGetBytes(theString,
+                                                 CFRange { location: 0, length: char_len },
+                                                 kCFStringEncodingUTF8,
+                                                 0,
+                                                 false as Boolean,
+                                                 buffer.as_mut_ptr(),
+                                                 buffer.len() as CFIndex,
+                                                 &mut bytes_used) as usize;
+            assert!(chars_written as CFIndex == char_len);
+
+            // This is dangerous; we over-allocate and null-terminate the string (during
+            // initialization).
+            assert!(bytes_used == buffer.len() as CFIndex);
+            str::from_utf8_unchecked(&buffer).to_string()
+        }
     }
     // Window 
     pub fn GetWindowList (window_id: usize) -> Windows {
@@ -193,30 +237,21 @@ pub mod ffi {
                 let owner_name = match cf_dict.find(str_to_cf_dict_key("kCGWindowOwnerName")) {
                     Some(owner_name) => {
                         let owner_name_ref: CFStringRef = mem::transmute(owner_name);
-                        let c_string = CFStringGetCStringPtr(owner_name_ref, kCFStringEncodingUTF8);
-                        if c_string != ptr::null() {
-                            str::from_utf8_unchecked(CStr::from_ptr(c_string).to_bytes())
-                        } else {
-                            ""
-                        }
+                        cf_string_ref_to_string(owner_name_ref)
                     },
                     None      => {
-                        ""
+                        "".to_string()
                     }
                 };
                 let name = match cf_dict.find(str_to_cf_dict_key("kCGWindowName")) {
                     Some(name) => {
                         let name_ref: CFStringRef = mem::transmute(name);
-                        let c_string = CFStringGetCStringPtr(name_ref, kCFStringEncodingUTF8);
-                        if c_string != ptr::null() {
-                            str::from_utf8_unchecked(CStr::from_ptr(c_string).to_bytes())
-                        } else {
-                            ""
-                        }
+                        cf_string_ref_to_string(name_ref)
                     },
                     None      => {
-                        ""
+                        "".to_string()
                     }
+
                 };
 
                 let is_on_screen = match cf_dict.find(str_to_cf_dict_key("kCGWindowIsOnscreen")) {
@@ -262,8 +297,9 @@ pub mod ffi {
                 let window = Window {
                     number: number, store_type: store_type, layer: layer, sharing_state: sharing_state,
                     alpha: alpha, owner_pid: owner_pid, memory_usage: memory_usage,
-                    workspace: workspace, owner_name: owner_name.to_string(), name: name.to_string(),
-                    is_on_screen: is_on_screen, backing_location_video_memory: backing_location_video_memory,
+                    workspace: workspace, owner_name: owner_name, name: name,
+                    is_on_screen: is_on_screen, 
+                    backing_location_video_memory: backing_location_video_memory,
                     height: height as f64, width: width as f64, x: x as f64, y: y as f64
                 };
                 windows.push(window);
@@ -356,7 +392,10 @@ pub mod ffi {
             let mut disps: Vec<CGDisplayCount> = Vec::with_capacity(count as usize);
             disps.set_len(count as usize);
 
-            err = CGGetActiveDisplayList(disps.len() as CGDisplayCount, &mut disps[0] as *mut CGDirectDisplayID, &mut count);
+            err = CGGetActiveDisplayList(
+                    disps.len() as CGDisplayCount, 
+                    &mut disps[0] as *mut CGDirectDisplayID, 
+                    &mut count );
             if err != CGErrorSuccess {
                 println!("Error getting list of displays.");
                 return vec![];
