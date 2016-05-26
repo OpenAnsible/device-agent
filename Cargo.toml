@@ -5,8 +5,6 @@ version = "0.0.1"
 authors = ["Luo <gnulinux@126.com>"]
 
 [dependencies]
-# screenshot = { path="../screenshot-rs" }
-# image      = "*"
 bmp        = "*"
 libc       = "*"
 lodepng    = "*"
@@ -22,8 +20,6 @@ x11cap = "*"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = {  path="../core-foundation-rs/core-foundation" }
-
-# core-graphics   = "*"
 core-graphics   = { path="../core-graphics-rs" }
 # cocoa           = "*"
 

@@ -1,15 +1,4 @@
 
-
-pub fn hello () {
-    println!("hello, world!");
-}
-
-pub fn main (){
-    println!("this is main at screen.rs");
-}
-
-
-
 #[cfg(target_os = "macos")]
 pub mod ffi {
     extern crate core_foundation;
@@ -72,42 +61,42 @@ pub mod ffi {
             }
         }
         pub fn to_bmp(&self, path: &str) {
-            // let mut im = bmp::Image::new(self.width as u32, self.height as u32);
+            let mut im = bmp::Image::new(self.width as u32, self.height as u32);
             let image_buff = self.data.as_slice();
 
-            // for row in (0..(self.height)) {
-            //     for col in ((0..self.width)) {
-            //         let idx = row * (self.width * self.pixel_width) + col * self.pixel_width;
-            //         let b = image_buff[idx];
-            //         let g = image_buff[idx] + 1;
-            //         let r = image_buff[idx] + 2;
-            //         let a = image_buff[idx] + 3;
-            //         im.set_pixel( col as u32, row as u32, bmp::Pixel {r: r, g: g, b: b});
+            for row in (0..(self.height)) {
+                for col in ((0..self.width)) {
+                    let idx = row * (self.width * self.pixel_width) + col * self.pixel_width;
+                    let b = image_buff[idx];
+                    let g = image_buff[idx+1];
+                    let r = image_buff[idx+2];
+                    let a = image_buff[idx+3];
+                    im.set_pixel( col as u32, row as u32, bmp::Pixel {r: r, g: g, b: b});
+                }
+            }
+            // let mut pixels: Vec<Vec<Vec<u8>>> = Vec::with_capacity(self.height);
+            // for row in (0..self.height) {
+            //     let mut line: Vec<Vec<u8>> = Vec::with_capacity(self.width);
+            //     for col in (0..self.width) {
+            //         let idx = row*self.width*self.pixel_width + col*self.pixel_width;
+            //         let mut pixel: Vec<u8> = Vec::with_capacity(self.pixel_width);
+            //         for i in (idx..(idx+self.pixel_width)) {
+            //             // B, G, R, A
+            //             pixel.push(image_buff[i]);
+            //         }
+            //         line.push(pixel);
+            //     }
+            //     pixels.push(line);
+            // }
+            // // BMP Format
+            // let mut im = bmp::Image::new(self.width as u32, self.height as u32);
+            // for row in (0..self.height) {
+            //     for col in (0..self.width) {
+            //         im.set_pixel( col as u32, row as u32,
+            //             bmp::Pixel {r: pixels[row][col][2], g: pixels[row][col][1], b: pixels[row][col][0]}
+            //         );
             //     }
             // }
-            let mut pixels: Vec<Vec<Vec<u8>>> = Vec::with_capacity(self.height);
-            for row in (0..self.height) {
-                let mut line: Vec<Vec<u8>> = Vec::with_capacity(self.width);
-                for col in (0..self.width) {
-                    let idx = row*self.width*self.pixel_width + col*self.pixel_width;
-                    let mut pixel: Vec<u8> = Vec::with_capacity(self.pixel_width);
-                    for i in (idx..(idx+self.pixel_width)) {
-                        // B, G, R, A
-                        pixel.push(image_buff[i]);
-                    }
-                    line.push(pixel);
-                }
-                pixels.push(line);
-            }
-            // BMP Format
-            let mut im = bmp::Image::new(self.width as u32, self.height as u32);
-            for row in (0..self.height) {
-                for col in (0..self.width) {
-                    im.set_pixel( col as u32, row as u32,
-                        bmp::Pixel {r: pixels[row][col][2], g: pixels[row][col][1], b: pixels[row][col][0]}
-                    );
-                }
-            }
             let res = im.save(path);
             match res {
                 Ok(_) => {
