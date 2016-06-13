@@ -42,18 +42,17 @@ type ImageBuff = (usize, usize, usize, Vec<u8>);
 
 fn bgr_to_yuv (width: &usize, height: &usize, pixel_width: &usize, image_buff: &Vec<u8>) -> Vec<u8> {
     let now = SystemTime::now();
-    // let image_buff = data; // BGRA
-    // println!("{:?}", pixel_width);
-    let width: f64  = *width as f64;
-    let height:f64  = *height as f64;
+    // image_buff : BGRA
+    let width_f: f64  = *width as f64;
+    let height_f:f64  = *height as f64;
 
-    let size   = (width*height*1.5f64) as usize;
+    let size   = (width_f*height_f*1.5f64) as usize;
     let mut frame: Vec<u8>  = Vec::with_capacity(size);
     frame.resize(size, 0u8);
 
-    for row in 0usize..height as usize {
-        for col in 0usize..width as usize {
-            let idx = row * (width as usize * pixel_width) + col * pixel_width;
+    for row in 0usize..height.clone() {
+        for col in 0usize..width.clone() {
+            let idx = row * (width * pixel_width) + col * pixel_width;
             let b = image_buff[idx];
             let g = image_buff[idx+1];
             let r = image_buff[idx+2];
@@ -63,17 +62,17 @@ fn bgr_to_yuv (width: &usize, height: &usize, pixel_width: &usize, image_buff: &
             
             let mut yuv_idx = 0usize;
             if row%2 > 0 {
-                yuv_idx = (row*width as usize - width as usize)/4;
+                yuv_idx = (row*width - width)/4;
             } else {
-                yuv_idx = row*(width as usize)/4;
+                yuv_idx = row*width/4;
             }
 
-            frame[row*width as usize + col] = y;
+            frame[row*width + col] = y;
 
-            let idx1: usize = (width*height) as usize + yuv_idx;
+            let idx1: usize = width*height + yuv_idx;
             frame[idx1 + col/2 ] = cb;
 
-            let idx2 = idx1 + (width*height*0.25f64) as usize;
+            let idx2 = idx1 + (width_f*height_f*0.25f64) as usize;
             frame[idx2 + col/2 ] = cr;
         }
     }
