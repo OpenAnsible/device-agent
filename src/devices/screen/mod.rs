@@ -6,6 +6,8 @@ pub mod ffi {
     // extern crate image;
     extern crate bmp;
     extern crate lodepng;
+    use std::convert::AsRef;
+
 
     #[derive(Debug)]
     pub struct Window {
@@ -17,7 +19,7 @@ pub mod ffi {
         pub owner_pid: isize,
         pub memory_usage: isize,  // i64
         pub workspace: isize,
-        pub owner_name: String, // &'static str
+        pub owner_name: String,   // &'static str
         pub name: String,
         pub is_on_screen: bool,
         pub backing_location_video_memory: bool,
@@ -27,16 +29,19 @@ pub mod ffi {
         pub x: f64,
         pub y: f64,
     }
+
     pub type Windows = Vec<Window>;
-    #[derive(Debug)]
+
+    #[derive(Debug, Clone)]
     pub struct Image {
-        pub data: Vec<u8>,
+        pub data: Vec<u8>,  // BGRA
         pub height: usize,
         pub width: usize,
         // pub row_len: usize, // Might be superfluous
         pub pixel_width: usize,
     }
-    
+
+
     impl Image {
         pub fn to_png(&self, path: &str) {
             // let d = lodepng::encode_memory(image_buff, width as usize, height as usize, lodepng::ffi::ColorType::LCT_RGBA, 8).unwrap();
@@ -64,8 +69,8 @@ pub mod ffi {
             let mut im = bmp::Image::new(self.width as u32, self.height as u32);
             let image_buff = self.data.as_slice();
 
-            for row in (0..(self.height)) {
-                for col in ((0..self.width)) {
+            for row in 0..self.height {
+                for col in 0..self.width {
                     let idx = row * (self.width * self.pixel_width) + col * self.pixel_width;
                     let b = image_buff[idx];
                     let g = image_buff[idx+1];
@@ -426,7 +431,7 @@ pub mod ffi {
             }
         }
     }
-    pub unsafe fn DisplayCreateImage (display_id: usize) -> Result<Image, &'static str> {
+    pub unsafe fn DisplayCreateImage (display_id: usize) -> Result<(usize, usize, usize, Vec<u8>), &'static str> {
         let display_image = CGDisplayCreateImage(display_id as CGDirectDisplayID);
         // Get info about image
         let width = CGImageGetWidth(display_image) as usize;
@@ -441,23 +446,24 @@ pub mod ffi {
         let cf_data = CGDataProviderCopyData(CGImageGetDataProvider(display_image));
         let raw_len = CFDataGetLength(cf_data) as usize;
 
-        let res = if width*height*pixel_bits != raw_len*8 {
-            Err("Image size is inconsistent with W*H*D.")
-        } else {
-            let data = slice::from_raw_parts(CFDataGetBytePtr(cf_data), raw_len).to_vec();
-            Ok(Image {
-                data: data,
-                height: height,
-                width: width,
-                // row_len: row_len,
-                pixel_width: pixel_bits/8
-            })
-        };
-
         // Release native objects
-        CGImageRelease(display_image);
-        CFRelease(cf_data as *const libc::c_void);
-        res
+        // CGImageRelease(display_image);
+
+        if width*height*pixel_bits != raw_len*8 {
+            CFRelease(cf_data as *const libc::c_void);
+            return Err("Image size is inconsistent with W*H*D.");
+        }
+        // println!("{:?}", slice::from_raw_parts(CFDataGetBytePtr(cf_data), raw_len) );
+        let data = slice::from_raw_parts(CFDataGetBytePtr(cf_data), raw_len);
+ 
+        Ok((width as usize, height as usize, pixel_bits/8, data.to_vec() ))
+        // Ok(Image {
+        //     data: data,
+        //     height: height,
+        //     width: width,
+        //     // row_len: row_len,
+        //     pixel_width: pixel_bits/8
+        // })
     }
 
     pub fn GetActiveDisplayList () -> Vec<usize> {
@@ -631,10 +637,10 @@ pub mod ffi {
         }
         new_data
     }
-
+    
     /// TODO Support multiple screens
     /// This may never happen, given the horrific quality of Win32 APIs
-    pub fn DisplayCreateImage(display_id: usize) -> Result<Image, &'static str> {
+    pub fn DisplayCreateImage(display_id: usize) -> Result<(usize, usize, usize, &[u8]), &'static str> {
         unsafe {
             // Enumerate monitors, getting a handle and DC for requested monitor.
             // loljk, because doing that on Windows is worse than death
@@ -699,14 +705,15 @@ pub mod ffi {
             DeleteObject(h_bmp);
 
             let data = flip_rows(data, height as usize, width as usize*pixel_width);
-
-            Ok(Image {
-                data: data,
-                height: height as usize,
-                width: width as usize,
-                // row_len: width as usize*pixel_width,
-                pixel_width: pixel_width,
-            })
+            // write_yuv(width, height, pixel_width, data);
+            Ok((width, height, pixel_width, data))
+            // Ok(Image {
+            //     data: data,
+            //     height: height as usize,
+            //     width: width as usize,
+            //     // row_len: width as usize*pixel_width,
+            //     pixel_width: pixel_width,
+            // })
         }
     }
 }
@@ -742,10 +749,11 @@ pub fn window_list(display_id: usize) -> Vec<ffi::Window> {
     ffi::GetWindowList(display_id)
 }
 
-pub fn display_capture (display_id: usize) -> Result<ffi::Image, &'static str> {
+pub fn display_capture (display_id: usize) -> Result<(usize, usize, usize, Vec<u8>), &'static str> {
     unsafe{
         ffi::DisplayCreateImage(display_id)
     }
+
 }
 pub fn window_capture () -> (){
 
