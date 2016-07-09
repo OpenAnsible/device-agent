@@ -6,7 +6,8 @@
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
-
+#include <libavutil/samplefmt.h>
+#include <time.h>
 /*
 Compile(OS X):
     cc -I /usr/local/Cellar/ffmpeg/3.0.1/include -Wall -g -c \
@@ -109,7 +110,156 @@ int rgb24_to_yuv420p (uint8_t rgb24data[], int width, int height, uint8_t output
     // return 1;
 }
 
+int rgb24_to_h264(uint8_t rgb24data[], int width, int height, uint8_t output_bytes[]){
+    time_t          btime, etime;
+    enum AVCodecID  codec_id = AV_CODEC_ID_H264;
+    AVCodec         *codec;
+    AVCodecContext  *c= NULL;
+    int             i, ret, got_output;
+    AVFrame         *frame;
+    AVPacket        pkt;
+    // MPEG EOF Flag
+    // uint8_t         endcode[] = { 0, 0, 1, 0xb7 };
 
+    btime = time(NULL);
+    printf("Encode video file %s\n", filename);
+
+    codec = avcodec_find_encoder(codec_id);
+    if (!codec) {
+        fprintf(stderr, "Codec not found\n");
+        return 0;
+    }
+    printf("Codec: %s\n", codec->name);
+
+    c = avcodec_alloc_context3(codec);
+    if (!c) {
+        fprintf(stderr, "Could not allocate video codec context\n");
+        return 0;
+    }
+
+    c->bit_rate     = 400000;
+    c->width        = width;
+    c->height       = height;
+    c->time_base    = (AVRational){1,25};
+    c->gop_size     = 10;
+    c->max_b_frames = 1;
+    c->pix_fmt      = AV_PIX_FMT_YUV420P;
+
+    if (codec_id == AV_CODEC_ID_H264){
+        av_opt_set(c->priv_data, "preset", "slow", 0);
+    }
+    if (avcodec_open2(c, codec, NULL) < 0) {
+        fprintf(stderr, "Could not open codec\n");
+        return 0;
+    }
+    // Init AVFrame
+    frame = av_frame_alloc();
+    if (!frame) {
+        fprintf(stderr, "Could not allocate video frame\n");
+        return 0;
+    }
+
+    frame->format = c->pix_fmt;
+    frame->width  = c->width;
+    frame->height = c->height;
+
+    ret = av_image_alloc(frame->data, frame->linesize, c->width, 
+                         c->height, c->pix_fmt, 32);
+    if (ret < 0) {
+        fprintf(stderr, "Could not allocate raw picture buffer\n");
+        return 0;
+    }
+    
+    // RGB24 Data
+    uint8_t             *input_data[4];
+    int                 input_linesize[4];
+    struct  SwsContext  *sws_ctx;
+    
+    // Assign RGB24 PIXELS SEQ DATA.
+    input_data[0] = rgb24data;
+
+    if ((ret = av_image_alloc(input_data, input_linesize, frame->width,
+                              frame->height, AV_PIX_FMT_RGB24, 1)) < 0) {
+        fprintf(stderr, "Could not allocate destination image\n");
+        return 0;
+    }
+
+    // Convert RGB24 Picture To YUV420P(I420P).
+    sws_ctx = sws_getContext(frame->width, frame->height, AV_PIX_FMT_RGB24,
+                             frame->width, frame->height, AV_PIX_FMT_YUV420P,
+                             SWS_FAST_BILINEAR, 0, 0, 0);
+    sws_scale(sws_ctx, (const uint8_t * const*)input_data, input_linesize, 
+              0, frame->height, frame->data, frame->linesize);
+    
+    // Encode YUV420P(I420) Picture To Raw Video (Without Media Format).
+    av_init_packet(&pkt);
+    pkt.data = NULL;       // packet data will be allocated by the encoder
+    pkt.size = 0;
+    fflush(stdout);
+
+    frame->pts = i;
+
+    ret = avcodec_encode_video2(c, &pkt, frame, &got_output);
+    if (ret < 0) {
+        fprintf(stderr, "Error encoding frame\n");
+        return 0;
+    }
+
+    // Debug
+    FILE            *f;
+    f = fopen("test.h264", "wb");
+    if (!f) {
+        fprintf(stderr, "Could not open %s\n", filename);
+        return 0;
+    }
+
+    if (got_output) {
+        printf("Write frame %3d (size=%5d)\n", i, pkt.size);
+        // Return Video Packet.
+        output_data[0] = pkt.size;
+        output_data[1] = pkt.data;
+
+        fwrite(pkt.data, 1, pkt.size, f);
+        av_packet_unref(&pkt);
+    }
+
+    // get the delayed frames
+    for (got_output=1; got_output; i++) {
+        fflush(stdout);
+        ret = avcodec_encode_video2(c, &pkt, NULL, &got_output);
+        if (ret < 0) {
+            fprintf(stderr, "Error encoding frame\n");
+            return 0;
+        }
+
+        if (got_output) {
+            printf("Write frame %3d (size=%5d)\n", i, pkt.size);
+            // Return Video Packet.
+            output_data[0] = pkt.size;
+            output_data[1] = pkt.data;
+            
+            fwrite(pkt.data, 1, pkt.size, f);
+            av_packet_unref(&pkt);
+        }
+    }
+
+    // add sequence end code to have a real mpeg file
+    // fwrite(endcode, 1, sizeof(endcode), f);
+
+    fclose(f);
+
+    avcodec_close(c);
+    av_free(c);
+    av_freep(&frame->data[0]);
+    av_frame_free(&frame);
+
+    printf("\n");
+    etime = time(NULL);
+    printf("time: %.0f s\n", difftime(etime, btime)) ;
+}
+int rgb24_to_mpegts(){
+
+}
 // int main(int argc, char const *argv[]){
 //     int     width=1440,height=900;
 //     FILE    *output_file, *input_file;
@@ -122,7 +272,7 @@ int rgb24_to_yuv420p (uint8_t rgb24data[], int width, int height, uint8_t output
 
 //     input_file = fopen("test.rgb", "rb");
 //     fread(input_data, 1, width*height*3, input_file);
-    
+
 //     int ret = rgb24_to_yuv420p(input_data, width, height, output_data);
 //     printf("ret code: %d\n", ret);
 //     // for (int i=0; i<output_data_size; i++){
