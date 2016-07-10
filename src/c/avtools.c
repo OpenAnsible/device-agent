@@ -23,6 +23,9 @@ void hello() {
 }
 
 int rgb24_to_yuv420p (uint8_t rgb24data[], int width, int height, uint8_t output_bytes[]){
+    av_register_all();
+    // avfilter_register_all();
+
     uint8_t *input_data[4];
     uint8_t *output_data[4];
     int     input_linesize[4];
@@ -107,10 +110,13 @@ int rgb24_to_yuv420p (uint8_t rgb24data[], int width, int height, uint8_t output
     // for(i=0;i<height/2;i++){
     //     fwrite(output_data[2]+output_linesize[2]*i,1,width/2,fp_out);
     // }
-    // return 1;
+    return 1;
 }
 
 int rgb24_to_h264(uint8_t rgb24data[], int width, int height, uint8_t output_bytes[]){
+    av_register_all();
+    // avfilter_register_all();
+
     time_t          btime, etime;
     enum AVCodecID  codec_id = AV_CODEC_ID_H264;
     AVCodec         *codec;
@@ -122,7 +128,6 @@ int rgb24_to_h264(uint8_t rgb24data[], int width, int height, uint8_t output_byt
     // uint8_t         endcode[] = { 0, 0, 1, 0xb7 };
 
     btime = time(NULL);
-    printf("Encode video file %s\n", filename);
 
     codec = avcodec_find_encoder(codec_id);
     if (!codec) {
@@ -209,15 +214,15 @@ int rgb24_to_h264(uint8_t rgb24data[], int width, int height, uint8_t output_byt
     FILE            *f;
     f = fopen("test.h264", "wb");
     if (!f) {
-        fprintf(stderr, "Could not open %s\n", filename);
+        fprintf(stderr, "Could not open %s\n", "test.h264");
         return 0;
     }
 
     if (got_output) {
         printf("Write frame %3d (size=%5d)\n", i, pkt.size);
         // Return Video Packet.
-        output_data[0] = pkt.size;
-        output_data[1] = pkt.data;
+        output_bytes[0] = pkt.size;
+        output_bytes[1] = pkt.data;
 
         fwrite(pkt.data, 1, pkt.size, f);
         av_packet_unref(&pkt);
@@ -235,9 +240,9 @@ int rgb24_to_h264(uint8_t rgb24data[], int width, int height, uint8_t output_byt
         if (got_output) {
             printf("Write frame %3d (size=%5d)\n", i, pkt.size);
             // Return Video Packet.
-            output_data[0] = pkt.size;
-            output_data[1] = pkt.data;
-            
+            output_bytes[0] = pkt.size;
+            output_bytes[1] = pkt.data;
+
             fwrite(pkt.data, 1, pkt.size, f);
             av_packet_unref(&pkt);
         }
@@ -257,6 +262,7 @@ int rgb24_to_h264(uint8_t rgb24data[], int width, int height, uint8_t output_byt
     etime = time(NULL);
     printf("time: %.0f s\n", difftime(etime, btime)) ;
 }
+
 int rgb24_to_mpegts(){
 
 }
