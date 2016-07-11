@@ -28,7 +28,7 @@ fn window_list (){
         // Windows of Display
         let windows = screen.windows();
         match screen.capture(){
-            Ok(image) => println!("Screen Width: {:?} Height: {:?}", image.width(), image.height() ),
+            Ok(image) => println!("ScreenShot Width: {:?} Height: {:?}", image.width(), image.height() ),
             Err(_)    => print!("")
         };
         

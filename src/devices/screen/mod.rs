@@ -13,7 +13,7 @@ pub use self::ffi::CGImage;
 #[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
 #[derive(Debug, Clone)]
 pub struct Image {
-    pub data: Vec<u8>,  // BGRA
+    pub data: Vec<u8>,     // BGRA
     pub height: usize,
     pub width: usize,
     // pub row_len: usize, // Might be superfluous
@@ -464,6 +464,18 @@ impl Screen {
     pub fn new(display_id: usize) -> Screen {
         Screen { display_id: display_id }
     }
+    pub fn main() -> Screen {
+        // Main Display
+        unsafe{
+            Screen::new(ffi::GetMainDisplayID())
+        }
+    }
+    pub fn list () -> Vec<Screen> {
+        // Display List
+        unsafe{
+            ffi::GetActiveDisplayList()
+        }
+    }
     pub fn id(&self) -> usize {
         self.display_id
     }
@@ -504,23 +516,24 @@ impl Screen {
         }
     }
     pub fn capture(&self) -> Result<ffi::CGImage, ()> {
-        // let width = 0usize;
         unsafe {
             let image = ffi::DisplayCreateImage(&self.display_id).unwrap();
             Ok(image)
         }
     }
-    // pub fn capture_with_rect(&self, x: usize, y: usize, width: usize, height: usize) ->() {
-        
-    // }
-    pub fn record(&self) -> () {
-
+    pub fn capture_with_rect(&self, x: usize, y: usize, 
+                             width: usize, height: usize) 
+                             ->() {
+        ()
     }
-    // pub fn record_with_rect(&self, x: usize, y: usize, 
-    //                 width: usize, height: usize)
-    //                 -> () {
-
-    // }
+    pub fn record(&self) -> () {
+        ()
+    }
+    pub fn record_with_rect(&self, x: usize, y: usize, 
+                            width: usize, height: usize)
+                            -> () {
+        ()
+    }
 }
 
 
@@ -528,10 +541,6 @@ impl Screen {
 
 pub fn screens () -> Vec<Screen>{
     ffi::GetActiveDisplayList()
-}
-
-pub fn main_screen() -> Screen {
-    Screen::new(ffi::GetMainDisplayID())  
 }
 
 
