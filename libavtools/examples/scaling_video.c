@@ -26,6 +26,15 @@
  * @example scaling_video.c
  */
 
+/*
+Compile(OS X):
+    cc -I /usr/local/Cellar/ffmpeg/3.0.1/include -Wall -g -c \
+            -o scaling_video.o scaling_video.c
+    cc avtools.o -L /usr/local/Cellar/ffmpeg/3.0.1/lib \
+            -lavdevice -lavformat -lavfilter -lavcodec \
+            -lswresample -lswscale -lavutil  \
+            -o avtools
+*/
 #include <libavutil/imgutils.h>
 #include <libavutil/parseutils.h>
 #include <libswscale/swscale.h>
@@ -49,8 +58,8 @@ static void fill_yuv_image(uint8_t *data[4], int linesize[4],
     }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
+    
     uint8_t *src_data[4], *dst_data[4];
     int src_linesize[4], dst_linesize[4];
     int src_w = 320, src_h = 240, dst_w, dst_h;

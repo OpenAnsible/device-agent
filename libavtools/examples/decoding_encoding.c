@@ -30,6 +30,16 @@
  * See library 'libavformat' for the format handling
  */
 
+/*
+Compile(OS X):
+    cc -I /usr/local/Cellar/ffmpeg/3.0.1/include -Wall -g -c \
+            -o decoding_encoding.o decoding_encoding.c
+    cc decoding_encoding.o -L /usr/local/Cellar/ffmpeg/3.0.1/lib \
+            -lavdevice -lavformat -lavfilter -lavcodec \
+            -lswresample -lswscale -lavutil  \
+            -o decoding_encoding
+*/
+
 #include <math.h>
 
 #include <libavutil/opt.h>
@@ -628,10 +638,8 @@ static void video_decode_example(const char *outfilename, const char *filename)
     printf("\n");
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
     const char *output_type;
-
     /* register all the codecs */
     avcodec_register_all();
 
@@ -660,6 +668,5 @@ int main(int argc, char **argv)
                 output_type);
         return 1;
     }
-
     return 0;
 }
