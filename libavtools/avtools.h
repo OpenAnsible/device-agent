@@ -1,7 +1,6 @@
 
 void hello();
-int rgb24_to_yuv420p(uint8_t rgb24data[], 
-					 int width, 
-					 int height, 
-					 uint8_t output_bytes[]);
+int rgb24_to_yuv420p(uint8_t rgb24_data[], int src_w, int src_h, 
+                     uint8_t *dst_data[4], int dst_w, int dst_h);
+
 
