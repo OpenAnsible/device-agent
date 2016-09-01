@@ -38,6 +38,4 @@ $(BIN_TARGET): $(OBJ_TARGET)
 .PHONY: clean
 
 clean:
-	rm $(OBJ_TARGET);
-	rm $(LIB_TARGET);
-	rm $(BIN_TARGET);
+	rm *.o *.a $(BIN_TARGET);

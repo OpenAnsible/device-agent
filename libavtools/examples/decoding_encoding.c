@@ -655,7 +655,9 @@ int main(int argc, char **argv){
     }
     output_type = argv[1];
 
-    if (!strcmp(output_type, "h264")) {
+    if (!strcmp(output_type, "ts")) {
+        video_encode_example("test.ts", AV_CODEC_ID_MPEG2TS);
+    } else if (!strcmp(output_type, "h264")) {
         video_encode_example("test.h264", AV_CODEC_ID_H264);
     } else if (!strcmp(output_type, "mp2")) {
         audio_encode_example("test.mp2");
