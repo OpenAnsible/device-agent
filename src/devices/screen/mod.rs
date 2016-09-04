@@ -1,9 +1,5 @@
 #[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
 
-// extern crate image;
-extern crate bmp;
-extern crate lodepng;
-
 pub use std::convert::AsRef;
 pub use std::time::{ Duration, SystemTime };
 pub use std::thread;
@@ -30,8 +26,7 @@ pub mod ffi {
     use std::boxed::Box;
     use std::sync::Arc;
     use super::{
-        thread,
-        lodepng, bmp, AsRef, SystemTime, Duration,
+        thread, AsRef, SystemTime, Duration,
         Image, Window, Screen,
         // bgr_to_yuv, ycbcr_to_rgb, rgb_to_ycbcr
     };

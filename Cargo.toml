@@ -6,9 +6,9 @@ links   = "avtools"
 build   = "build.rs"
 
 [dependencies]
-bmp        = "0.1.4"
+# bmp        = "0.1.4"
+# lodepng    = "0.8.1"
 libc       = "0.2.13"
-lodepng    = "0.8.1"
 ffmpeg-sys = "2.8.9"
 time       = "0.1.35"
 
