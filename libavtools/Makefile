@@ -1,5 +1,5 @@
-CC     = cc
-AR     = ar
+CC = cc
+AR = ar
 
 CFLAGS       = -Wall -g -c 
 INCLUDE_PATH = -I /usr/local/Cellar/ffmpeg/3.0.1/include
