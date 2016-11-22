@@ -20,3 +20,14 @@ Access and control devices from anywhere with web browsers, mobile or tablet app
 *   对设备进行写操作（如：硬盘写入，设定鼠标位置，模拟键盘输出，控制Shell ...）
 
 
+编译
+------
+
+`OS X` 下面的 `C Lib` 问题:
+
+.. code:: bash
+    
+    export C_INCLUDE_PATH=/usr/local/include
+    export DYLD_LIBRARY_PATH=/usr/local/lib
+    export LIBRARY_PATH=/usr/local/lib
+

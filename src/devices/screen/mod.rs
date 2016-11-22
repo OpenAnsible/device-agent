@@ -1,12 +1,14 @@
-#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
 
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 pub use std::convert::AsRef;
 pub use std::time::{ Duration, SystemTime };
 pub use std::thread;
 
 pub use self::ffi::CGImage;
 
-#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 #[derive(Debug, Clone)]
 pub struct Image {
     pub data: Vec<u8>,     // BGRA
@@ -16,7 +18,8 @@ pub struct Image {
     pub pixel_width: usize,
 }
 
-#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 #[cfg(target_os = "macos")]
 pub mod ffi {
     extern crate core_foundation;
@@ -28,7 +31,6 @@ pub mod ffi {
     use super::{
         thread, AsRef, SystemTime, Duration,
         Image, Window, Screen,
-        // bgr_to_yuv, ycbcr_to_rgb, rgb_to_ycbcr
     };
     
     // https://github.com/servo/core-graphics-rs/blob/master/src/display.rs
@@ -107,9 +109,8 @@ pub mod ffi {
             str::from_utf8_unchecked(CStr::from_ptr(c_string).to_bytes()).to_string()
         } else {
             let char_len: CFIndex = CFStringGetLength(theString);
-
-            // First, ask how big the buffer ought to be.
             let mut bytes_required: CFIndex = 0;
+
             CFStringGetBytes(theString,
                              CFRange { location: 0, length: char_len },
                              kCFStringEncodingUTF8,
@@ -119,7 +120,6 @@ pub mod ffi {
                              0,
                              &mut bytes_required);
 
-            // Then, allocate the buffer and actually copy.
             let mut buffer = vec![b'\x00'; bytes_required as usize];
 
             let mut bytes_used: CFIndex = 0;
@@ -132,14 +132,11 @@ pub mod ffi {
                                                  buffer.len() as CFIndex,
                                                  &mut bytes_used) as usize;
             assert!(chars_written as CFIndex == char_len);
-
-            // This is dangerous; we over-allocate and null-terminate the string (during
-            // initialization).
             assert!(bytes_used == buffer.len() as CFIndex);
+
             str::from_utf8_unchecked(&buffer).to_string()
         }
     }
-    // Window 
     pub fn GetWindowList (window_id: &usize) -> Vec<Window> {
         let mut windows: Vec<Window> = Vec::new();
 
@@ -150,20 +147,11 @@ pub mod ffi {
                 // kCGNullWindowID
             );
             let length = CFArrayGetCount(windowList) as usize;
-
-            // let window_list = CFArray(windowList);
-            // for i in 0..window_list.len(){
-            //     let _wd = window_list.get(i as CFIndex);
-            //     let window_dict = CFDictionary(_wd);
-            // }
-
-            // from Quartz import CGWindowListCopyWindowInfo, kCGWindowListExcludeDesktopElements, kCGNullWindowID
-            // from Quartz import CGGetDisplaysWithRect, CGRect
-            // map( lambda w: int(w['kCGWindowNumber']), list(CGWindowListCopyWindowInfo(kCGWindowListExcludeDesktopElements, kCGNullWindowID)) )
             for i in 0..length {
                 let idx: CFIndex = i as CFIndex;
                 let _wd: CFDictionaryRef = CFArrayGetValueAtIndex(windowList, idx); // CFDictionaryRef
                 let cf_dict = CFDictionary(_wd); // methods: find, get, kvs (unknow error)
+
                 // https://developer.apple.com/library/mac/documentation/Carbon/Reference/CGWindow_Reference
                 // /#//apple_ref/doc/constant_group/Required_Window_List_Keys
                 let number = CFNumber(mem::transmute(
@@ -180,30 +168,12 @@ pub mod ffi {
                     cf_dict.find(str_to_cf_dict_key("kCGWindowSharingState")).unwrap()
                 )).to_isize(kCFNumberIntType).unwrap();
 
-                let alpha = 0.0f32;
-                // let alpha = cf_dict.find(str_to_cf_dict_key("kCGWindowAlpha")).unwrap();
-                // let alpha_ref: CFNumberRef = mem::transmute( alpha );
-                // let alpha = match cf_dict.find(str_to_cf_dict_key("kCGWindowAlpha")) {
-                //     Some(alpha) => {
-                //         let alpha_ref: CFNumberRef = mem::transmute( alpha );
-                //         let alpha = CFNumber(alpha_ref);
-                //         match alpha.to_f32() {
-                //             Some(alpha) => {
-                //                 alpha
-                //             },
-                //             None => {
-                //                 0.0f32
-                //             }
-                //         }
-                //     },
-                //     None => {
-                //         -0.0f32
-                //     }
-                // };
-                // let alpha = CFNumber(mem::transmute(
-                //     cf_dict.find(str_to_cf_dict_key("kCGWindowAlpha")).unwrap()
-                // )).to_f32().unwrap();
-
+                let mut alpha: f32 = 0.001f32;
+                let alpha_ref: CFNumberRef = mem::transmute(
+                    cf_dict.find(str_to_cf_dict_key("kCGWindowAlpha")).unwrap()
+                );
+                let _ = CFNumberGetValue(alpha_ref, kCFNumberFloatType, mem::transmute(&mut alpha));
+                
                 let owner_pid = CFNumber(mem::transmute(
                     cf_dict.find(str_to_cf_dict_key("kCGWindowOwnerPID")).unwrap()
                 )).to_isize(kCFNumberIntType).unwrap();
@@ -213,12 +183,8 @@ pub mod ffi {
                 )).to_isize(kCFNumberLongLongType).unwrap();
 
                 let workspace = match cf_dict.find(str_to_cf_dict_key("kCGWindowWorkspace")) {
-                    Some(_wk) => {
-                        CFNumber(mem::transmute(_wk)).to_isize(kCFNumberIntType).unwrap()
-                    },
-                    None      => {
-                        -1isize
-                    }
+                    Some(_wk) => CFNumber(mem::transmute(_wk)).to_isize(kCFNumberIntType).unwrap(),
+                    None      => 1isize
                 };
 
                 let owner_name = match cf_dict.find(str_to_cf_dict_key("kCGWindowOwnerName")) {
@@ -226,9 +192,7 @@ pub mod ffi {
                         let owner_name_ref: CFStringRef = mem::transmute(owner_name);
                         cf_string_ref_to_string(owner_name_ref)
                     },
-                    None      => {
-                        "".to_string()
-                    }
+                    None      => "".to_string()
                 };
                 let name = match cf_dict.find(str_to_cf_dict_key("kCGWindowName")) {
                     Some(name) => {
@@ -281,11 +245,10 @@ pub mod ffi {
                     }
                 };
                 let window = Window::new(
-                                    number as usize, name, owner_name, owner_pid as usize,
-                                    memory_usage as usize, Some(alpha), Some(workspace),
-                                    is_on_screen, width as f64, height as f64, 
-                                    x as f64, y as f64
-                );
+                    number as usize, name, owner_name, owner_pid as usize,
+                    memory_usage as usize, Some(alpha), Some(workspace),
+                    is_on_screen, width as f64, height as f64, 
+                    x as f64, y as f64);
                 windows.push(window);
             }
         }
@@ -351,7 +314,8 @@ pub mod ffi {
     }
 }
 
-#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 #[derive(Debug)]
 pub struct Window {
     window_id: usize, // number
@@ -368,14 +332,16 @@ pub struct Window {
     y: f64
 }
 
-#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 #[derive(Debug)]
 pub struct Screen {
     display_id: usize,
     // size
 }
 
-#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 impl Window {
     pub fn new(window_id: usize, name: String, owner_name: String, owner_pid: usize,
                 memory_usage: usize, alpha: Option<f32>, workspace: Option<isize>,
@@ -454,7 +420,9 @@ impl Window {
     }
 
 }
-#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
+
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 impl Screen {
     pub fn new(display_id: usize) -> Screen {
         Screen { display_id: display_id }
@@ -530,9 +498,6 @@ impl Screen {
         ()
     }
 }
-
-
-
 
 pub fn screens () -> Vec<Screen>{
     ffi::GetActiveDisplayList()

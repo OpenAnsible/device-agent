@@ -1,10 +1,12 @@
-#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, unused_must_use, non_snake_case)]
-
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 
 #[allow(unused_imports)]
 extern crate libc;
+#[allow(unused_imports)]
 extern crate ffmpeg_sys;
 
+#[allow(unused_imports)]
 use ffmpeg_sys::{
     av_malloc, 
 
@@ -25,18 +27,23 @@ use ffmpeg_sys::{
     avcodec_find_decoder, avcodec_open2, avcodec_decode_video2
 };
 
-use std::thread;
-use std::env;
+#[allow(unused_imports)]
+use std::{ thread, env, ptr, slice };
+#[allow(unused_imports)]
 use std::time::{ Duration, SystemTime };
+#[allow(unused_imports)]
 use std::fs::{ File, OpenOptions };
+#[allow(unused_imports)]
 use std::io::Write;
+#[allow(unused_imports)]
 use std::sync::Arc;
-use std::ptr;
-use std::slice;
 
 pub mod devices;
+#[allow(unused_imports)]
 use devices::screen::CGImage;
 
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 fn window_list (){
     let screens = devices::screen::screens();
     for screen in screens.iter() {
@@ -49,11 +56,14 @@ fn window_list (){
         };
         
         for window in windows.iter() {
-            println!("\t{:?} {}X{} \t{}\t{}", window.owner_pid(), window.width(), window.height(), window.name(), window.owner_name());
+            println!("\t{:?} {}x{} \t{}\t{}\t{:?}", window.owner_pid(), window.width(), window.height(), 
+                window.name(), window.owner_name(), window.alpha().unwrap() );
         }
     }
 }
 
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 fn guess_os() -> String {
     let os = if cfg!(target_os = "windows") {
         "windows"
@@ -69,6 +79,8 @@ fn guess_os() -> String {
     os.to_string()
 }
 
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 #[link(name="avtools")]
 extern "C" {
     fn hello();
@@ -78,24 +90,23 @@ extern "C" {
     //                      src_h: i32, dst_data: *mut *const u8);
 }
 
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 fn capture (){
     let screens = devices::screen::screens();
     let image   = screens[0].capture().unwrap();
 
-    let raw_len = image.raw_len();
-    let pixel_width = image.pixel_width();
+    // let raw_len = image.raw_len();
+    // let pixel_width = image.pixel_width();
 
     // println!("Pixel Width: {:?}", pixel_width );
     let width  = image.width();
     let height = image.height();
 
     unsafe{
-
-        let mut pixels  = image.raw_mut_data(); // BGRA
-
+        let pixels  = image.raw_mut_data(); // BGRA
         let mut src_frame = av_frame_alloc().as_mut().unwrap();
         let mut dst_frame = av_frame_alloc().as_mut().unwrap();
-
         src_frame.width   = width as i32;
         src_frame.height  = height as i32;
         
@@ -138,9 +149,11 @@ fn capture (){
     }
 }
 
-#[allow(unused_imports, unused_unsafe, unused_variables)]
+#[allow(unused_imports, unused_unsafe, unused_variables, unused_assignments, unused_must_use)]
+#[allow(non_upper_case_globals, dead_code, improper_ctypes, unreachable_code, non_snake_case)]
 fn main (){
     window_list();
+    return ();
 
     let now = SystemTime::now();
     match now.elapsed() {

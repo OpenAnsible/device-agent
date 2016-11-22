@@ -3,6 +3,14 @@
 #include <stdint.h>
 #include <time.h>
 
+// #include "/usr/local/include/libavcodec/avcodec.h"
+// #include "/usr/local/include/libswscale/swscale.h"
+// #include "/usr/local/include/libavformat/avformat.h"
+// #include "/usr/local/include/libavutil/imgutils.h"
+// #include "/usr/local/include/libavutil/parseutils.h"
+// #include "/usr/local/include/libavutil/samplefmt.h"
+// #include "/usr/local/include/libavutil/opt.h"
+
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
 #include <libavformat/avformat.h>
@@ -102,19 +110,79 @@ int rgb24_to_yuv420p_with_slowspeed(uint8_t rgb24_data[], int src_w, int src_h,
     return size;
 }
 
+int bgra_to_yuv420p (uint8_t bgra_data[], int src_w, int src_h, 
+                     uint8_t *dst_data[4], int dst_w, int dst_h){
+    enum AVPixelFormat src_pixfmt=AV_PIX_FMT_BGRA;
+    enum AVPixelFormat dst_pixfmt=AV_PIX_FMT_YUV420P;
+
+    uint8_t             *src_data[4];
+    struct SwsContext   *img_convert_ctx;
+
+    int ret=0, src_linesize[4], dst_linesize[4];
+    
+    ret= av_image_alloc(src_data, src_linesize,src_w, src_h, src_pixfmt, 1);
+    if ( ret < 0 ) {
+        return -1;
+    }
+    ret = av_image_alloc(dst_data, dst_linesize,dst_w, dst_h, dst_pixfmt, 1);
+    if ( ret < 0 ) {
+        return -1;
+    }
+
+    img_convert_ctx = sws_getContext(src_w, src_h, src_pixfmt, 
+                                     dst_w, dst_h, dst_pixfmt, 
+                                     SWS_BICUBIC, NULL, NULL, NULL);
+
+    src_data[0] = bgra_data;
+
+    sws_scale(img_convert_ctx, (const uint8_t *const *)src_data, 
+              src_linesize, 0, src_h, dst_data, dst_linesize);
+
+    sws_freeContext(img_convert_ctx);
+    return 0;
+}
+
+int rgb24_to_yuv420p_t (uint8_t rgb24_data[], int src_w, int src_h, uint8_t *dst_data[4]){
+    av_register_all();
+    printf("[avtools] Ok...\n");
+    int i, size;
+
+    size = src_w*src_h*3;
+
+    uint8_t rgb[5]={1,2,3,4,5};
+
+    dst_data[0] = rgb;
+
+    printf("[avtools] pixels: %d x %d x 3 = %d\n", src_w, src_h, size);
+    // printf("[avtools] pixels length: %d x %d x 3 = %d\n", src_w, src_h, size);
+    
+    printf("[");
+    for (i=0; i<size; i++){
+        printf("%d, ", rgb24_data[i]);
+    }
+    printf("]\n");
+
+    int ret, src_linesize[4];
+    uint8_t *src_data[4];
+
+    ret= av_image_alloc(src_data, src_linesize,src_w, src_h, AV_PIX_FMT_RGB24, 1);
+
+    return 1;
+}
+
 int rgb24_to_yuv420p (uint8_t rgb24_data[], int src_w, int src_h, 
                       uint8_t *dst_data[4], int dst_w, int dst_h){
 
-    enum AVPixelFormat src_pixfmt=AV_PIX_FMT_RGB24, dst_pixfmt=AV_PIX_FMT_YUV420P;
+    enum AVPixelFormat src_pixfmt=AV_PIX_FMT_RGB24;
+    enum AVPixelFormat dst_pixfmt=AV_PIX_FMT_YUV420P;
 
     // int src_bpp = av_get_bits_per_pixel(av_pix_fmt_desc_get(src_pixfmt));
     // int dst_bpp = av_get_bits_per_pixel(av_pix_fmt_desc_get(dst_pixfmt));
     
     uint8_t             *src_data[4];
-    int                 src_linesize[4], dst_linesize[4];
     struct SwsContext   *img_convert_ctx;
 
-    int ret=0;
+    int ret=0, src_linesize[4], dst_linesize[4];
     
     ret= av_image_alloc(src_data, src_linesize,src_w, src_h, src_pixfmt, 1);
     if ( ret < 0 ) {
